@@ -2,8 +2,8 @@
 
 source "https://rubygems.org"
 
-# git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+# when building for Lambda - be sure to execute on an EC2 instance running
+# Amazon Linux with Ruby 2.5
 
-# gem "rails"
-
-gem "git"
+gem 'open-uri'
+gem 'fileutils'
