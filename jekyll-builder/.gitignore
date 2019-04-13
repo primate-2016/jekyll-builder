@@ -39,7 +39,7 @@ build-iPhoneSimulator/
 /rdoc/
 
 ## Environment normalization:
-/.bundle/
+#/.bundle/
 /vendor/bundle
 /lib/bundler/man/
 
@@ -53,4 +53,4 @@ build-iPhoneSimulator/
 .rvmrc
 
 # ignore zip archives 
-.zip
+*.zip
