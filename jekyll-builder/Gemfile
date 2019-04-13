@@ -5,6 +5,5 @@ source "https://rubygems.org"
 # when building for Lambda - be sure to execute on an EC2 instance running
 # Amazon Linux with Ruby 2.5
 
-gem 'open-uri'
 gem 'fileutils'
 gem 'bundle'
