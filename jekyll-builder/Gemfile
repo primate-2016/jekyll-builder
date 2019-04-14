@@ -6,6 +6,6 @@ source "https://rubygems.org"
 # Amazon Linux with Ruby 2.5
 
 #gem 'fileutils'
-gem 'bundle'
+gem 'bundler'
 gem 'rubyzip'
-gem 'net/http'
+#gem 'net/http'
