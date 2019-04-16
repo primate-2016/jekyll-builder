@@ -102,7 +102,7 @@ def lambda_handler(event:, context:)
   #output = IO.popen("env")
   #output = system("cd #{repo_dir} && bundle install")
 =end
-  #output = Open3.capture3({'GEM_PATH' => ENV['GEM_PATH']}, "PATH=#{ENV['LAMBDA_TASK_ROOT']}/vendor/bundle/ruby/2.5.0:$PATH && bundle")
-  output = Open3.capture3("ls /opt/")
+  output = Open3.capture3({'GEM_HOME' => ENV['GEM_HOME']}, "PATH=/var/runtime:$PATH && gem env && ls /var/runtime/gems/ && bundle")
+  #output = Open3.capture3("gem install bundler")
   logger.info { "output is: #{output}" }
 end

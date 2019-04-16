@@ -5,7 +5,7 @@ source "https://rubygems.org"
 # when building for Lambda - be sure to execute on an EC2 instance running
 # Amazon Linux with Ruby 2.5
 
+# You will also need bundler in your vendor folder for deployment to a Lambda layer
+
 gem 'fileutils'
-gem 'bundler'
 gem 'rubyzip'
-#gem 'net/http'
