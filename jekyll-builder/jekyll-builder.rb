@@ -72,7 +72,7 @@ def unzip_file (file, destination)
 end
 
 def lambda_handler(event:, context:)
-=begin
+
   #logger.debug { "event received: #{event}" }
   #html_url = 'https://github.com/primate-2016/test-jekyll/archive/master.zip'
   html_url = "#{event['repository']['html_url']}/archive/master.zip"
@@ -96,13 +96,6 @@ def lambda_handler(event:, context:)
   
   logger.debug { "repo_dir: #{repo_dir}" }
   
-  # try running bundle at the system level rather than in the jekyll project - this way if gems are already
-  # present they wont be downloaded again and lambda execution will be faster
-  #output = IO.popen("#{ENV['GEM_PATH']}/bundle --gemfile=#{repo_dir}/Gemfile install")
-  #output = IO.popen("env")
-  #output = system("cd #{repo_dir} && bundle install")
-=end
-  output = Open3.capture3({'GEM_HOME' => ENV['GEM_HOME']}, "PATH=/var/runtime:$PATH && gem env && ls /var/runtime/gems/ && bundle")
-  #output = Open3.capture3("gem install bundler")
+  output = Open3.capture3("cd #{repo_dir} && /opt/ruby/2.5.0/gems/bundler-2.0.1/exe/bundle install --path #{repo_dir}/vendor/bundle")
   logger.info { "output is: #{output}" }
 end
