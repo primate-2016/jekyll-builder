@@ -1,5 +1,5 @@
 current directory: /home/ec2-user/jekyll-builder/jekyll-builder/vendor/bundle/ruby/2.5.0/gems/eventmachine-1.2.7/ext/fastfilereader
-/usr/local/rvm/rubies/ruby-2.5.3/bin/ruby -r ./siteconf20190422-25403-117gfhd.rb extconf.rb
+/home/ec2-user/.rvm/rubies/ruby-2.5.3/bin/ruby -r ./siteconf20190423-18356-158b91n.rb extconf.rb
 creating Makefile
 
 current directory: /home/ec2-user/jekyll-builder/jekyll-builder/vendor/bundle/ruby/2.5.0/gems/eventmachine-1.2.7/ext/fastfilereader
@@ -25,4 +25,4 @@ linking shared-object fastfilereaderext.so
 
 current directory: /home/ec2-user/jekyll-builder/jekyll-builder/vendor/bundle/ruby/2.5.0/gems/eventmachine-1.2.7/ext/fastfilereader
 make "DESTDIR=" install
-/bin/install -c -m 0755 fastfilereaderext.so ./.gem.20190422-25403-1158qup
+/usr/bin/install -c -m 0755 fastfilereaderext.so ./.gem.20190423-18356-1k1y0pc
