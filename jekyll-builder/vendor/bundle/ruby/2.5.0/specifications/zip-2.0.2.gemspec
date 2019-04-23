@@ -15,8 +15,8 @@ Gem::Specification.new do |s|
   s.files = ["ChangeLog.txt".freeze, "README".freeze]
   s.homepage = "http://github.com/postmodern/rubyzip2".freeze
   s.rdoc_options = ["--charset=UTF-8".freeze]
-  s.rubygems_version = "2.7.9".freeze
+  s.rubygems_version = "2.7.6".freeze
   s.summary = "zip is a Ruby library for reading and writing Zip files".freeze
 
-  s.installed_by_version = "2.7.9" if s.respond_to? :installed_by_version
+  s.installed_by_version = "2.7.6" if s.respond_to? :installed_by_version
 end
