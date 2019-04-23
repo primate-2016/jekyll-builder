@@ -17,5 +17,6 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency "rake", "~> 12.3.1"
     spec.add_development_dependency "fileutils"
     spec.add_development_dependency "rubyzip"
+    spec.add_development_dependency "zip"
   end
   
