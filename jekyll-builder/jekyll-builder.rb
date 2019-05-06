@@ -1,27 +1,17 @@
 require 'json'
-#require 'aws-sdk'
+require 'aws-sdk'
 require 'logger'
-#require 'open-uri'
 require 'fileutils'
 require 'zip'
 require 'net/http'
-#require 'bundler/setup'
 require 'open3'
+require_relative 's3_folder_upload.rb'
 
 def logger
   logger = Logger.new(STDERR)
   logger.level = Logger::DEBUG
   logger
 end
-=begin
-def download(url)
-  case io = open(url)
-  when StringIO then File.open(path, 'w') { |f| f.write(io) }
-  when Tempfile then io.close #; FileUtils.mv(io.path, path)
-  end
-  Tempfile.path
-end
-=end
 
 def download(url)
   url = URI(url)
@@ -74,51 +64,41 @@ end
 def lambda_handler(event:, context:)
 
   logger.debug { "event received: #{event}" }
-  #html_url = 'https://github.com/primate-2016/test-jekyll/archive/master.zip'
   html_url = "#{event['repository']['html_url']}/archive/master.zip"
   logger.debug { "html url of git repo: #{html_url}" }
-  #{ statusCode: 200, body: JSON.generate('Hello from Lambda!') }
   
+  Open3.capture3("rm -rf /tmp/archive.zip")
   get_url(html_url)
   
   extract_dir = '/tmp/extract_dir/'
+  Open3.capture3("rm -rf #{extract_dir}")
   unzip_file('/tmp/archive.zip', extract_dir)
   
-  # need to get name of repo from event
+  files = Open3.capture3("ls #{extract_dir}/test-jekyll-master/_posts")
+  logger.debug { "files = #{files}" }
+  
   repo_name = event['repository']['name']
   master_branch = event['repository']['master_branch']
-  
-  # i'm making an assumption that git will always retirn the master branch when downloadnig from zip endpoint
-  # and that the master branch will be whatever is listed in the webhook as master - need to validate
-  #master_branch = 'master'
-  #repo_name = 'test-jekyll'
+
   repo_dir = extract_dir + repo_name + '-' + master_branch
   
   logger.debug { "repo_dir: #{repo_dir}" }
   
-  # try running bundle at the system level rather than in the jekyll project - this way if gems are already
-  # present they wont be downloaded again and lambda execution will be faster
-  #output = IO.popen("#{ENV['GEM_PATH']}/bundle --gemfile=#{repo_dir}/Gemfile install")
-  #output = IO.popen("env")
-  #output = system("cd #{repo_dir} && bundle install")
-
-  #output = Open3.capture3({'GEM_HOME' => ENV['GEM_HOME']}, "PATH=/var/runtime/gems/bundler-1.17.1/exe/:$PATH && env && bundle")
-  #output = Open3.capture3("gem install bundler")
-
+  # jekyll build will barf without Git installed, Lambda execution environment does
+  # not have git installed, so install it
   git_install = Open3.capture3("rm -fr /tmp/git-2.13.5 && \
                                 mkdir /tmp/git-2.13.5 && \
                                 cd /tmp/git-2.13.5 && \
                                 curl -s -O http://packages.eu-west-1.amazonaws.com/2017.03/updates/ba2b87ec77c7/x86_64/Packages/git-2.13.5-1.53.amzn1.x86_64.rpm && \
                                 rpm -K git-2.13.5-1.53.amzn1.x86_64.rpm && \
                                 rpm2cpio git-2.13.5-1.53.amzn1.x86_64.rpm | cpio -id && \
-                                rm git-2.13.5-1.53.amzn1.x86_64.rpm && \
-                                cd /tmp/git-2.13.5 && \
-                                HOME=/var/task && \
-                                GIT_TEMPLATE_DIR=/tmp/git-2.13.5/usr/share/git-core/templates && \
-                                GIT_EXEC_PATH=/tmp/git-2.13.5/usr/libexec/git-core && \
-                                /tmp/git-2.13.5/usr/bin/git")
-  logger.info { "git is #{git_install}" }
-  
+                                rm git-2.13.5-1.53.amzn1.x86_64.rpm")
+  logger.debug { "git install stage output is: #{git_install}" }
+
+  # need to set all sorts of env vars here to work around restrictions in the underlying
+  # Lambda execution environment. Jekyll build will barf without bundler installed, its
+  # packaged in the Lambda layer, install it. Jekyll build will also barf if the
+  # dir it runs in is not a git repo (!?) so git init the folder. 
   output = Open3.capture3({'HOME' => repo_dir, \
                             'GIT_TEMPLATE_DIR' => '/tmp/git-2.13.5/usr/share/git-core/templates', \
                             'GIT_EXEC_PATH' => '/tmp/git-2.13.5/usr/libexec/git-core' }, \
@@ -128,31 +108,20 @@ def lambda_handler(event:, context:)
                             GEM_PATH=/tmp/:$GEM_PATH && \
                             PATH=/opt/ruby/2.5.0/bin/:$PATH && \
                             PATH=/tmp/git-2.13.5/usr/bin/:$PATH && \
-                            ls /opt/ruby/ && \
                             gem install --local /opt/ruby/bundler-2.0.1.gem && \
-                            jekyll build")
-  logger.info { "output is: #{output}" }
-=begin
-  #repo_dir = '/tmp'
-  output = Open3.capture3({'HOME' => repo_dir}, \
-                            "cd #{repo_dir} && \
-                            GEM_HOME=/tmp/ && \
-                            GEM_PATH=/opt/ruby/2.5.0/:$GEM_PATH && \
-                            GEM_PATH=/tmp/:$GEM_PATH && \
-                            PATH=/opt/ruby/2.5.0/bin/:$PATH && \
-                            gem install --local /opt/ruby/bundler-2.0.1.gem && \
-                            gem env && \
-                            jekyll build")
-  logger.info { "output is: #{output}" }
-=end
+                            git init && \
+                            jekyll build && \
+                            ls _site/")
+  logger.debug { "Jekyll build stage output is: #{output}" }
+  # TODO: the above is not causing the function to fail even if jekyll can't build the website and is returning 1 - need to figure out why
 
-
+  site_dir = repo_dir + '/_site'
+  files = Open3.capture3("ls #{site_dir}")
+  logger.debug { "files are #{files}" }
+  
+  # TODO: need to check there are files in the site_dir or the dir exists, otherwise throw an exception
+  uploader = S3FolderUpload.new(site_dir, 'elasticcows.co.uk',  include_folder = false)
+  uploader.upload!
+  
 end
 
-# install of jekyll is failing - need to figure out how to package this 
-# maybe do it like you grabbed the installed bundler the first time?
-# - some of the jekyll themes don;t have gemfiles anyway 
-# and you just run jekyll build against them - i.e. they expect jekyll to be there
-# you were getting confused with what was in the gemfile.lock as a result of running bundle install
-# against the gemspec - the gemfile.lock showed all the gems it pulled down
-# you might only need jekyll....
